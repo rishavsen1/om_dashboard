@@ -5,12 +5,14 @@ A web-based dashboard for calculating redeployable value across different stakeh
 ## 🏗️ Architecture
 
 ### Backend (Python Flask)
+
 - **Framework**: Flask 3.0
 - **Calculations**: Pure Python with NumPy for efficiency
 - **API**: RESTful endpoints for all calculations
 - **Port**: 5000 (default)
 
 ### Frontend
+
 - **Templates**: Jinja2 HTML templates
 - **Styling**: Tailwind CSS
 - **Charts**: Chart.js
@@ -19,7 +21,7 @@ A web-based dashboard for calculating redeployable value across different stakeh
 ## 📁 Project Structure
 
 ```
-om_value_calc/
+om_dashboard/
 ├── app.py                 # Flask application & routes
 ├── calculators.py         # Core calculation logic
 ├── requirements.txt       # Python dependencies
@@ -34,7 +36,8 @@ om_value_calc/
 ### Step 1: Create Virtual Environment
 
 ```bash
-cd /home/rishav/Programs/om_value_calc
+git clone https://github.com/rishavsen1/om_dashboard.git
+cd om_dashboard
 python3 -m venv venv
 source venv/bin/activate  # On Linux/Mac
 ```
@@ -97,19 +100,20 @@ curl -X POST http://localhost:5000/api/calculate/homeowner \
 
 ### Calculation Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/` | GET | Main dashboard page |
-| `/api/calculate/homeowner` | POST | Calculate daily homeowner savings |
-| `/api/calculate/yearly` | POST | Calculate annual blended savings |
-| `/api/calculate/rep` | POST | Calculate REP value proposition |
-| `/api/calculate/ci` | POST | Calculate C&I business value |
-| `/api/calculate/payback` | POST | Calculate payback period |
-| `/api/summary/data` | GET | Get summary table data |
+| Endpoint                   | Method | Description                       |
+| -------------------------- | ------ | --------------------------------- |
+| `/`                        | GET    | Main dashboard page               |
+| `/api/calculate/homeowner` | POST   | Calculate daily homeowner savings |
+| `/api/calculate/yearly`    | POST   | Calculate annual blended savings  |
+| `/api/calculate/rep`       | POST   | Calculate REP value proposition   |
+| `/api/calculate/ci`        | POST   | Calculate C&I business value      |
+| `/api/calculate/payback`   | POST   | Calculate payback period          |
+| `/api/summary/data`        | GET    | Get summary table data            |
 
 ### Example Request/Response
 
 **Request:**
+
 ```json
 POST /api/calculate/homeowner
 {
@@ -121,6 +125,7 @@ POST /api/calculate/homeowner
 ```
 
 **Response:**
+
 ```json
 {
   "dailySavings": 2.45,
@@ -176,6 +181,7 @@ Auto-generate API documentation.
 ### 5. Deployment
 
 **Option A: Docker**
+
 ```bash
 # Create Dockerfile
 docker build -t om-value-calc .
@@ -183,12 +189,14 @@ docker run -p 5000:5000 om-value-calc
 ```
 
 **Option B: Production Server**
+
 ```bash
 pip install gunicorn
 gunicorn -w 4 -b 0.0.0.0:5000 app:app
 ```
 
 **Option C: Cloud Deployment**
+
 - Deploy to Heroku, AWS, Google Cloud, or Azure
 - Use environment variables for configuration
 - Set up proper logging and monitoring
@@ -206,18 +214,21 @@ gunicorn -w 4 -b 0.0.0.0:5000 app:app
 ## 📝 Usage Examples
 
 ### Scenario 1: Calculate Homeowner Savings
+
 1. Navigate to "Detailed Calculators" → "Homeowners"
 2. Adjust HVAC and battery parameters
 3. View real-time daily savings and charts
 4. Run yearly simulation for annual estimates
 
 ### Scenario 2: Evaluate REP Value
+
 1. Complete homeowner yearly simulation first
 2. Switch to "REPs" tab
 3. Enter fleet size and wholesale prices
 4. View total annual value proposition
 
 ### Scenario 3: Payback Analysis
+
 1. Complete homeowner yearly simulation
 2. Switch to "Payback Period" tab
 3. Enter system costs and incentives
@@ -226,12 +237,14 @@ gunicorn -w 4 -b 0.0.0.0:5000 app:app
 ## 🐛 Troubleshooting
 
 **Port already in use:**
+
 ```bash
 # Kill process on port 5000
 lsof -ti:5000 | xargs kill -9
 ```
 
 **Import errors:**
+
 ```bash
 # Ensure virtual environment is activated
 which python  # Should point to venv/bin/python
@@ -239,6 +252,7 @@ pip list      # Verify all packages installed
 ```
 
 **CORS issues:**
+
 ```bash
 # Already configured in app.py with Flask-CORS
 # Check browser console for specific errors

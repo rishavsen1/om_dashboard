@@ -3,7 +3,7 @@
  * Handles all communication with Flask backend
  */
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = "http://localhost:5000/api";
 
 class DashboardAPI {
   /**
@@ -12,16 +12,16 @@ class DashboardAPI {
   async post(endpoint, data) {
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'API request failed');
+        throw new Error(error.error || "API request failed");
       }
 
       return await response.json();
@@ -40,7 +40,7 @@ class DashboardAPI {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'API request failed');
+        throw new Error(error.error || "API request failed");
       }
 
       return await response.json();
@@ -54,42 +54,42 @@ class DashboardAPI {
    * Calculate homeowner savings
    */
   async calculateHomeowner(params) {
-    return await this.post('/calculate/homeowner', params);
+    return await this.post("/calculate/homeowner", params);
   }
 
   /**
    * Calculate yearly simulation
    */
   async calculateYearly(params) {
-    return await this.post('/calculate/yearly', params);
+    return await this.post("/calculate/yearly", params);
   }
 
   /**
    * Calculate REP value
    */
   async calculateREP(params) {
-    return await this.post('/calculate/rep', params);
+    return await this.post("/calculate/rep", params);
   }
 
   /**
    * Calculate C&I value
    */
   async calculateCI(params) {
-    return await this.post('/calculate/ci', params);
+    return await this.post("/calculate/ci", params);
   }
 
   /**
    * Calculate payback period
    */
   async calculatePayback(params) {
-    return await this.post('/calculate/payback', params);
+    return await this.post("/calculate/payback", params);
   }
 
   /**
    * Get summary data
    */
   async getSummaryData() {
-    return await this.get('/summary/data');
+    return await this.get("/summary/data");
   }
 }
 
