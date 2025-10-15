@@ -1,0 +1,2724 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redeployable Value Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/2.2.1/chartjs-plugin-annotation.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+
+      .main-tab-button {
+        transition: all 0.2s ease-in-out;
+        border-bottom: 3px solid transparent;
+      }
+
+      .main-tab-button.active {
+        color: #1e40af;
+        font-weight: 700;
+        border-bottom-color: #1e40af;
+      }
+
+      #summary-view table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      #summary-view th,
+      #summary-view td {
+        padding: 14px 16px;
+        text-align: left;
+        border-bottom: 1px solid #e0e0e0;
+        font-size: 1rem;
+      }
+
+      #summary-view thead th {
+        font-weight: 600;
+        font-size: 1rem;
+        vertical-align: middle;
+      }
+
+      #summary-view .dark-header {
+        background-color: #2c3e50;
+        color: #ffffff;
+        text-align: center;
+      }
+
+      #summary-view .adoption-header {
+        background-color: #2c3e50;
+        color: #ffffff;
+        text-align: center;
+        border-bottom: 1px solid #46627f;
+      }
+
+      #summary-view .stakeholder-cell {
+        font-weight: 600;
+        vertical-align: top;
+        width: 15%;
+      }
+
+      #summary-view .numeric-cell {
+        text-align: right;
+        font-family: "Menlo", "Monaco", "Courier New", monospace;
+      }
+
+      #summary-view .total-row td {
+        font-weight: 600;
+        border-top: 2px solid #bdc3c7;
+      }
+
+      #summary-view tfoot td {
+        font-weight: 700;
+        font-size: 1.1rem;
+        border-top: 3px double #2c3e50;
+      }
+
+      #summary-view .row-highlight td {
+        background-color: #fffde7 !important;
+        transition: background-color 0.2s ease-in-out;
+      }
+
+      #calculator-view .info-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background-color: #d1d5db;
+        color: white;
+        font-weight: bold;
+        font-size: 12px;
+        cursor: pointer;
+        margin-left: 8px;
+        position: relative;
+      }
+
+      #calculator-view .info-tooltip {
+        position: absolute;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #374151;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        width: 220px;
+        text-align: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+        z-index: 10;
+        pointer-events: none;
+      }
+
+      #calculator-view .info-tooltip::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: #374151 transparent transparent transparent;
+      }
+
+      #calculator-view .info-icon:hover .info-tooltip {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      #calculator-view .equation-highlight {
+        font-family: "Courier New", Courier, monospace;
+        background-color: #374151;
+        color: #f3f4f6;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        display: inline-block;
+      }
+      #calculator-view .equation-box {
+        background-color: #f9fafb;
+        border: 1px solid #e5e7eb;
+        padding: 1rem;
+        border-radius: 1rem;
+      }
+      #calculator-view .equation-body {
+        font-family: "Courier New", Courier, monospace;
+        color: #374151;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      #calculator-view .sigma {
+        font-size: 2.5rem;
+        margin-right: 0.5rem;
+      }
+      #calculator-view .equation-component {
+        margin: 0 0.5rem;
+        text-align: center;
+      }
+      #calculator-view .calc-tab-button {
+        transition: all 0.2s ease-in-out;
+      }
+      #calculator-view .calc-tab-button.active {
+        background-color: white;
+        color: #1e40af;
+        font-weight: 700;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1),
+          0 2px 4px -2px rgb(0 0 0 / 0.1);
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 text-gray-800">
+    <header class="text-center p-4 bg-white shadow-md">
+      <h1 class="text-3xl md:text-4xl font-bold text-gray-900">
+        Redeployable Value Dashboard
+      </h1>
+    </header>
+
+    <div class="container mx-auto px-4 sm:px-8 border-b border-gray-300">
+      <nav class="flex space-x-8 -mb-px">
+        <button
+          id="main-tab-summary"
+          class="main-tab-button py-3 px-1 text-xl font-medium text-gray-600 active"
+        >
+          Overall Summary
+        </button>
+        <button
+          id="main-tab-calculators"
+          class="main-tab-button py-3 px-1 text-xl font-medium text-gray-600"
+        >
+          Detailed Calculators
+        </button>
+      </nav>
+    </div>
+
+    <main class="container mx-auto p-4 sm:p-6">
+      <div id="summary-view">
+        <h2 class="text-3xl font-bold mb-4">Annual Redeployable Value</h2>
+        <div class="bg-white p-6 rounded-2xl shadow-lg">
+          <div class="overflow-x-auto">
+            <table id="value-table">
+              <thead>
+                <tr>
+                  <th rowspan="2">Stakeholders</th>
+                  <th rowspan="2">Financial Benefit</th>
+                  <th colspan="3" class="adoption-header">Adoption</th>
+                </tr>
+                <tr>
+                  <th class="dark-header">5%</th>
+                  <th class="dark-header">10%</th>
+                  <th class="dark-header">15%</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td></td>
+                  <td></td>
+                  <td class="numeric-cell dark-header">1250 HVAC systems</td>
+                  <td class="numeric-cell dark-header">2500 HVAC systems</td>
+                  <td class="numeric-cell dark-header">3750 HVAC systems</td>
+                </tr>
+                <tr data-stakeholder="Homeowners">
+                  <td rowspan="3" class="stakeholder-cell">Homeowners</td>
+                  <td>TOU Savings</td>
+                  <td class="numeric-cell">$ 125,000</td>
+                  <td class="numeric-cell">$ 250,000</td>
+                  <td class="numeric-cell">$ 375,000</td>
+                </tr>
+                <tr data-stakeholder="Homeowners">
+                  <td>DR Incentives</td>
+                  <td class="numeric-cell">$ 187,500</td>
+                  <td class="numeric-cell">$ 375,000</td>
+                  <td class="numeric-cell">$ 562,500</td>
+                </tr>
+                <tr class="total-row" data-stakeholder="Homeowners">
+                  <td></td>
+                  <td class="numeric-cell">$ 312,500</td>
+                  <td class="numeric-cell">$ 625,000</td>
+                  <td class="numeric-cell">$ 937,500</td>
+                </tr>
+                <tr data-stakeholder="REPs">
+                  <td rowspan="2" class="stakeholder-cell">REPs</td>
+                  <td>Energy Arbitrage Cost Savings</td>
+                  <td class="numeric-cell">$ 100,000</td>
+                  <td class="numeric-cell">$ 100,000</td>
+                  <td class="numeric-cell">$ 100,000</td>
+                </tr>
+                <tr class="total-row" data-stakeholder="REPs">
+                  <td></td>
+                  <td class="numeric-cell">$ 100,000</td>
+                  <td class="numeric-cell">$ 100,000</td>
+                  <td class="numeric-cell">$ 100,000</td>
+                </tr>
+                <tr data-stakeholder="C&I Business">
+                  <td rowspan="2" class="stakeholder-cell">C&I Business</td>
+                  <td>Accelerated revenue (EBIT pulled forward)</td>
+                  <td class="numeric-cell" id="ci-value-5">...</td>
+                  <td class="numeric-cell" id="ci-value-10">...</td>
+                  <td class="numeric-cell" id="ci-value-15">...</td>
+                </tr>
+                <tr class="total-row" data-stakeholder="C&I Business">
+                  <td></td>
+                  <td class="numeric-cell" id="ci-total-5">...</td>
+                  <td class="numeric-cell" id="ci-total-10">...</td>
+                  <td class="numeric-cell" id="ci-total-15">...</td>
+                </tr>
+                <tr data-stakeholder="TDU / Utility">
+                  <td rowspan="2" class="stakeholder-cell">TDU / Utility</td>
+                  <td>Deferred Infrastrucutre Builds</td>
+                  <td class="numeric-cell">$ 9,236,018</td>
+                  <td class="numeric-cell">$ 23,350,000</td>
+                  <td class="numeric-cell">$ 35,025,000</td>
+                </tr>
+                <tr class="total-row" data-stakeholder="TDU / Utility">
+                  <td></td>
+                  <td class="numeric-cell">$ 9,236,018</td>
+                  <td class="numeric-cell">$ 23,350,000</td>
+                  <td class="numeric-cell">$ 35,025,000</td>
+                </tr>
+                <tr data-stakeholder="Region / State">
+                  <td rowspan="2" class="stakeholder-cell">Region / State</td>
+                  <td>Accelerated tax revenues from C&I operations</td>
+                  <td class="numeric-cell">$ 4,700,000</td>
+                  <td class="numeric-cell">$ 14,100,000</td>
+                  <td class="numeric-cell">$ 14,100,000</td>
+                </tr>
+                <tr class="total-row" data-stakeholder="Region / State">
+                  <td></td>
+                  <td class="numeric-cell">$ 4,700,000</td>
+                  <td class="numeric-cell">$ 14,100,000</td>
+                  <td class="numeric-cell">$ 14,100,000</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr class="total-row">
+                  <td colspan="2">Annual Redeployable Value</td>
+                  <td class="numeric-cell" id="grand-total-5">...</td>
+                  <td class="numeric-cell" id="grand-total-10">...</td>
+                  <td class="numeric-cell" id="grand-total-15">...</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+        <div class="mt-6 bg-white p-6 rounded-2xl shadow-lg">
+          <canvas id="redeployableValueChart"></canvas>
+        </div>
+      </div>
+
+      <div id="calculator-view" class="hidden">
+        <header class="text-center mb-8">
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-900">
+            Stakeholder Value Calculators
+          </h1>
+          <p class="text-gray-600 mt-2">
+            Model the financial savings and benefits for each stakeholder group.
+          </p>
+        </header>
+
+        <div
+          class="mb-8 p-1 bg-gray-200 rounded-xl flex items-center justify-center flex-wrap"
+        >
+          <button
+            id="calc-tab-homeowner"
+            class="calc-tab-button flex-grow text-center py-3 px-4 rounded-lg font-semibold text-gray-600 active"
+          >
+            Homeowners
+          </button>
+          <button
+            id="calc-tab-payback"
+            class="calc-tab-button flex-grow text-center py-3 px-4 rounded-lg font-semibold text-gray-600"
+          >
+            Payback Period
+          </button>
+          <button
+            id="calc-tab-rep"
+            class="calc-tab-button flex-grow text-center py-3 px-4 rounded-lg font-semibold text-gray-600"
+          >
+            REPs
+          </button>
+          <button
+            id="calc-tab-ci"
+            class="calc-tab-button flex-grow text-center py-3 px-4 rounded-lg font-semibold text-gray-600"
+          >
+            C&I Business
+          </button>
+          <button
+            id="calc-tab-tdu"
+            class="calc-tab-button flex-grow text-center py-3 px-4 rounded-lg font-semibold text-gray-600"
+          >
+            TDU / Utility
+          </button>
+          <button
+            id="calc-tab-region"
+            class="calc-tab-button flex-grow text-center py-3 px-4 rounded-lg font-semibold text-gray-600"
+          >
+            Region / State
+          </button>
+        </div>
+
+        <div id="view-homeowner">
+          <div class="mb-8 p-4 bg-white rounded-2xl shadow-lg">
+            <h3 class="text-lg font-semibold text-center mb-4">
+              Load Day Presets
+            </h3>
+            <div class="flex justify-center gap-4">
+              <button
+                id="preset-hot"
+                class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition"
+              >
+                Hot Summer Day
+              </button>
+              <button
+                id="preset-mild"
+                class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition"
+              >
+                Mild Spring Day
+              </button>
+              <button
+                id="preset-winter"
+                class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition"
+              >
+                Winter Morning
+              </button>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg">
+              <h2 class="text-2xl font-bold mb-6 border-b pb-3">Assumptions</h2>
+              <div class="mb-6">
+                <div class="flex items-center">
+                  <h3 class="text-lg font-semibold text-gray-700">
+                    Pricing Model
+                  </h3>
+                  <div class="info-icon">
+                    i
+                    <div class="info-tooltip">
+                      Determines how electricity cost is calculated. TOU has
+                      fixed peak/off-peak rates, while RTP uses fluctuating
+                      hourly wholesale prices.
+                    </div>
+                  </div>
+                </div>
+                <div
+                  class="flex items-center justify-center bg-gray-100 rounded-lg p-1 mt-3"
+                >
+                  <label
+                    class="w-1/2 text-center py-2 px-4 rounded-md cursor-pointer text-sm font-medium"
+                    >Time-of-Use<input
+                      type="radio"
+                      name="pricingModel"
+                      value="tou"
+                      class="hidden"
+                      checked
+                  /></label>
+                  <label
+                    class="w-1/2 text-center py-2 px-4 rounded-md cursor-pointer text-sm font-medium"
+                    >Real-Time Pricing<input
+                      type="radio"
+                      name="pricingModel"
+                      value="rtp"
+                      class="hidden"
+                  /></label>
+                </div>
+              </div>
+              <div id="tou-inputs" class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">
+                  Retail TOU Plan
+                </h3>
+                <div class="space-y-4">
+                  <div>
+                    <div class="flex items-center justify-between">
+                      <label
+                        for="peakRate"
+                        class="block text-sm font-medium text-gray-600"
+                        >Peak Rate ($/kWh)</label
+                      >
+                      <div class="info-icon">
+                        i
+                        <div class="info-tooltip">
+                          Price per kWh during high-demand hours. Higher rates
+                          increase potential savings from shifting load.
+                        </div>
+                      </div>
+                    </div>
+                    <input
+                      type="number"
+                      id="peakRate"
+                      value="0.28"
+                      step="0.01"
+                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+                    />
+                  </div>
+                  <div>
+                    <div class="flex items-center justify-between">
+                      <label
+                        for="offPeakRate"
+                        class="block text-sm font-medium text-gray-600"
+                        >Off-Peak Rate ($/kWh)</label
+                      >
+                      <div class="info-icon">
+                        i
+                        <div class="info-tooltip">
+                          Price per kWh during low-demand hours. This is the
+                          target rate for charging the battery.
+                        </div>
+                      </div>
+                    </div>
+                    <input
+                      type="number"
+                      id="offPeakRate"
+                      value="0.12"
+                      step="0.01"
+                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+                    />
+                  </div>
+                  <div>
+                    <div class="flex items-center justify-between">
+                      <label
+                        for="peakHours"
+                        class="block text-sm font-medium text-gray-600"
+                        >Utility Peak Hours (e.g., 14-19)</label
+                      >
+                      <div class="info-icon">
+                        i
+                        <div class="info-tooltip">
+                          The window when peak rates apply. The battery aims to
+                          discharge during these hours to cover usage.
+                        </div>
+                      </div>
+                    </div>
+                    <input
+                      type="text"
+                      id="peakHours"
+                      value="14-19"
+                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div id="rtp-inputs" class="mb-6 hidden">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">
+                  Wholesale Real-Time Prices
+                </h3>
+                <div>
+                  <div class="flex items-center justify-between">
+                    <label
+                      for="rtp-prices"
+                      class="block text-sm font-medium text-gray-600"
+                      >24 Hourly Prices ($/kWh)</label
+                    >
+                    <div class="info-icon">
+                      i
+                      <div class="info-tooltip">
+                        The fluctuating hourly price of electricity on the
+                        wholesale market. The battery will automatically charge
+                        low and discharge high.
+                      </div>
+                    </div>
+                  </div>
+                  <textarea
+                    id="rtp-prices"
+                    rows="4"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+                    placeholder="e.g., 0.08,0.07,..."
+                  >
+0.08,0.07,0.07,0.08,0.10,0.12,0.15,0.18,0.20,0.22,0.25,0.28,0.30,0.35,0.40,0.55,0.60,0.45,0.30,0.20,0.15,0.12,0.10,0.09</textarea
+                  >
+                </div>
+              </div>
+              <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">
+                  HVAC Load Profile
+                </h3>
+                <div class="space-y-4">
+                  <div>
+                    <div class="flex items-center justify-between">
+                      <label
+                        for="hvacConsumption"
+                        class="block text-sm font-medium text-gray-600"
+                        >Peak HVAC Consumption (kW)</label
+                      >
+                      <div class="info-icon">
+                        i
+                        <div class="info-tooltip">
+                          The maximum power your HVAC uses. A higher peak means
+                          more energy can be shifted, increasing savings.
+                        </div>
+                      </div>
+                    </div>
+                    <input
+                      type="number"
+                      id="hvacConsumption"
+                      value="3.5"
+                      step="0.1"
+                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+                    />
+                  </div>
+                  <div>
+                    <div class="flex items-center justify-between">
+                      <label
+                        for="hvacPeakTime"
+                        class="block text-sm font-medium text-gray-600"
+                        >Time of Peak HVAC Use (Hour)</label
+                      >
+                      <div class="info-icon">
+                        i
+                        <div class="info-tooltip">
+                          The hour your HVAC works the hardest. Aligning this
+                          with peak price hours maximizes savings potential.
+                        </div>
+                      </div>
+                    </div>
+                    <input
+                      type="number"
+                      id="hvacPeakTime"
+                      value="16"
+                      step="1"
+                      min="0"
+                      max="23"
+                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+                    />
+                  </div>
+                  <div>
+                    <div class="flex items-center justify-between">
+                      <label
+                        for="hvacLoadShape"
+                        class="block text-sm font-medium text-gray-600"
+                        >HVAC Load Shape (1-10)</label
+                      >
+                      <div class="info-icon">
+                        i
+                        <div class="info-tooltip">
+                          Controls how 'peaky' or 'flat' your daily HVAC usage
+                          is. A higher value creates a sharper, more
+                          concentrated peak.
+                        </div>
+                      </div>
+                    </div>
+                    <input
+                      type="range"
+                      id="hvacLoadShape"
+                      value="5"
+                      min="1"
+                      max="10"
+                      class="mt-1 block w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">
+                  Battery Specifications
+                </h3>
+                <div class="space-y-4">
+                  <div>
+                    <div class="flex items-center justify-between">
+                      <label
+                        for="batteryCapacity"
+                        class="block text-sm font-medium text-gray-600"
+                        >Usable Capacity (kWh)</label
+                      >
+                      <div class="info-icon">
+                        i
+                        <div class="info-tooltip">
+                          The total energy the battery can store and discharge.
+                          Larger capacity allows for shifting more energy.
+                        </div>
+                      </div>
+                    </div>
+                    <input
+                      type="number"
+                      id="batteryCapacity"
+                      value="10"
+                      step="1"
+                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+                    />
+                  </div>
+                  <div>
+                    <div class="flex items-center justify-between">
+                      <label
+                        for="minSoC"
+                        class="block text-sm font-medium text-gray-600"
+                        >Min SoC (%)</label
+                      >
+                      <div class="info-icon">
+                        i
+                        <div class="info-tooltip">
+                          State of Charge limits to protect battery health. This
+                          defines the effective usable capacity.
+                        </div>
+                      </div>
+                    </div>
+                    <input
+                      type="number"
+                      id="minSoC"
+                      value="10"
+                      step="5"
+                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+                    />
+                  </div>
+                  <div>
+                    <div class="flex items-center justify-between">
+                      <label
+                        for="maxSoC"
+                        class="block text-sm font-medium text-gray-600"
+                        >Max SoC (%)</label
+                      >
+                      <div class="info-icon">
+                        i
+                        <div class="info-tooltip">
+                          State of Charge limits to protect battery health. This
+                          defines the effective usable capacity.
+                        </div>
+                      </div>
+                    </div>
+                    <input
+                      type="number"
+                      id="maxSoC"
+                      value="90"
+                      step="5"
+                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+                    />
+                  </div>
+                  <div>
+                    <div class="flex items-center justify-between">
+                      <label
+                        for="dischargeDuration"
+                        class="block text-sm font-medium text-gray-600"
+                        >Discharge Duration (hours)</label
+                      >
+                      <div class="info-icon">
+                        i
+                        <div class="info-tooltip">
+                          How many of the highest-priced hours the battery will
+                          target to cover with stored energy.
+                        </div>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <input
+                        type="number"
+                        id="dischargeDuration"
+                        value="4"
+                        step="1"
+                        class="block w-full rounded-md border-gray-300 shadow-sm sm:text-sm p-2"
+                      />
+                      <div
+                        id="match-peak-container"
+                        class="flex items-center gap-1"
+                      >
+                        <input
+                          type="checkbox"
+                          id="match-peak-duration"
+                          class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                          checked
+                        /><label
+                          for="match-peak-duration"
+                          class="text-xs text-gray-500"
+                          >Match Peak</label
+                        >
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="flex items-center justify-between">
+                      <label
+                        for="batteryPower"
+                        class="block text-sm font-medium text-gray-600"
+                        >Max Charge/Discharge Power (kW)</label
+                      >
+                      <div class="info-icon">
+                        i
+                        <div class="info-tooltip">
+                          The speed at which the battery can charge or
+                          discharge. Limits how much energy can be moved in a
+                          single hour.
+                        </div>
+                      </div>
+                    </div>
+                    <input
+                      type="number"
+                      id="batteryPower"
+                      value="5"
+                      step="0.5"
+                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+                    />
+                  </div>
+                  <div>
+                    <div class="flex items-center justify-between">
+                      <label
+                        for="batteryEfficiency"
+                        class="block text-sm font-medium text-gray-600"
+                        >Round-Trip Efficiency (%)</label
+                      >
+                      <div class="info-icon">
+                        i
+                        <div class="info-tooltip">
+                          Energy lost during a charge/discharge cycle. Higher
+                          efficiency means less wasted energy and more savings.
+                        </div>
+                      </div>
+                    </div>
+                    <input
+                      type="number"
+                      id="batteryEfficiency"
+                      value="85"
+                      step="1"
+                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="lg:col-span-2 space-y-8">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-2xl shadow-lg text-center">
+                  <h4
+                    class="text-sm font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Total HVAC Usage
+                  </h4>
+                  <p
+                    id="totalHVACUsage"
+                    class="text-3xl font-bold text-blue-600 mt-2"
+                  >
+                    0 <span class="text-xl">kWh</span>
+                  </p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-lg text-center">
+                  <h4
+                    class="text-sm font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Daily Savings
+                  </h4>
+                  <p
+                    id="dailySavings"
+                    class="text-3xl font-bold text-green-600 mt-2"
+                  >
+                    $0.00
+                  </p>
+                </div>
+              </div>
+              <div class="equation-box space-y-4">
+                <h3 class="text-xl font-bold text-center">
+                  Calculation Breakdown
+                </h3>
+                <div>
+                  <h4 class="font-semibold text-center text-gray-700">
+                    Cost w/o Battery
+                  </h4>
+                  <div class="equation-body mt-2">
+                    <span class="sigma">Σ</span>
+                    <div class="equation-component">
+                      (Usage <sub>hr</sub> × Rate <sub>hr</sub>)
+                    </div>
+                    <span class="mx-2 font-bold">=</span>
+                    <div class="equation-component" id="peakCostNoBattery">
+                      $0.00
+                      <span class="block text-xs font-sans text-gray-500"
+                        >(Peak)</span
+                      >
+                    </div>
+                    <span class="font-bold text-xl">+</span>
+                    <div class="equation-component" id="offPeakCostNoBattery">
+                      $0.00
+                      <span class="block text-xs font-sans text-gray-500"
+                        >(Off-Peak)</span
+                      >
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-center text-gray-700">
+                    Cost w/ Battery
+                  </h4>
+                  <div class="equation-body mt-2">
+                    <div class="equation-component" id="chargeCostWithBattery">
+                      $0.00
+                      <span class="block text-xs font-sans text-gray-500"
+                        >(Charge Cost)</span
+                      >
+                    </div>
+                    <span class="font-bold text-xl">+</span>
+                    <div class="equation-component" id="peakCostWithBattery">
+                      $0.00
+                      <span class="block text-xs font-sans text-gray-500"
+                        >(Peak)</span
+                      >
+                    </div>
+                    <span class="font-bold text-xl">+</span>
+                    <div class="equation-component" id="offPeakCostWithBattery">
+                      $0.00
+                      <span class="block text-xs font-sans text-gray-500"
+                        >(Off-Peak)</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h3 class="text-xl font-bold mb-4">
+                  Daily Energy Cost Comparison
+                </h3>
+                <div class="relative h-80">
+                  <canvas id="costChart"></canvas>
+                </div>
+              </div>
+              <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h3 class="text-xl font-bold mb-4">
+                  Hourly Energy Dispatch Strategy
+                </h3>
+                <div class="relative h-80">
+                  <canvas id="dispatchChart"></canvas>
+                </div>
+              </div>
+              <div
+                id="yearly-simulation"
+                class="bg-white p-6 rounded-2xl shadow-lg"
+              >
+                <h2 class="text-2xl font-bold mb-6 border-b pb-3 text-center">
+                  Yearly Savings Simulation
+                </h2>
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-lg font-semibold">Define Year Composition</h3>
+                  <span
+                    id="total-days"
+                    class="text-sm font-bold bg-gray-200 text-gray-800 py-1 px-3 rounded-full"
+                    >Total Days: 365</span
+                  >
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                  <div class="bg-red-50 p-4 rounded-lg">
+                    <h4 class="font-bold text-red-800">Hot Days</h4>
+                    <label
+                      for="hotDays"
+                      class="block text-sm font-medium text-gray-600 mt-2"
+                      >Number of Days</label
+                    ><input
+                      type="number"
+                      id="hotDays"
+                      value="90"
+                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm p-2"
+                    />
+                    <p class="text-sm text-gray-600 mt-2">
+                      Savings/Day:
+                      <span id="hot-savings-per-day" class="font-semibold"
+                        >$0.00</span
+                      >
+                    </p>
+                  </div>
+                  <div class="bg-green-50 p-4 rounded-lg">
+                    <h4 class="font-bold text-green-800">Mild Days</h4>
+                    <label
+                      for="mildDays"
+                      class="block text-sm font-medium text-gray-600 mt-2"
+                      >Number of Days</label
+                    ><input
+                      type="number"
+                      id="mildDays"
+                      value="180"
+                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm p-2"
+                    />
+                    <p class="text-sm text-gray-600 mt-2">
+                      Savings/Day:
+                      <span id="mild-savings-per-day" class="font-semibold"
+                        >$0.00</span
+                      >
+                    </p>
+                  </div>
+                  <div class="bg-blue-50 p-4 rounded-lg">
+                    <h4 class="font-bold text-blue-800">Winter Days</h4>
+                    <label
+                      for="winterDays"
+                      class="block text-sm font-medium text-gray-600 mt-2"
+                      >Number of Days</label
+                    ><input
+                      type="number"
+                      id="winterDays"
+                      value="95"
+                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm p-2 bg-gray-100"
+                      readonly
+                    />
+                    <p class="text-sm text-gray-600 mt-2">
+                      Savings/Day:
+                      <span id="winter-savings-per-day" class="font-semibold"
+                        >$0.00</span
+                      >
+                    </p>
+                  </div>
+                </div>
+                <div class="text-center">
+                  <button
+                    id="calculate-yearly"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition text-lg"
+                  >
+                    Calculate Blended Annual Savings
+                  </button>
+                </div>
+                <div id="yearly-results" class="mt-6 text-center hidden">
+                  <h3 class="text-xl font-bold text-gray-800">
+                    Blended Annual Homeowner Savings
+                  </h3>
+                  <p
+                    id="blendedAnnualSavings"
+                    class="text-4xl font-bold text-green-600 mt-2"
+                  >
+                    $0
+                  </p>
+                  <div class="mt-4 flex justify-center gap-4">
+                    <div class="bg-gray-100 p-3 rounded-lg inline-block">
+                      <h4
+                        class="text-sm font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Avg Daily Energy Shifted
+                      </h4>
+                      <p
+                        id="homeowner-avg-daily-energy-shifted"
+                        class="text-2xl font-bold text-blue-600 mt-1"
+                      >
+                        0 kWh
+                      </p>
+                    </div>
+                    <div class="bg-gray-100 p-3 rounded-lg inline-block">
+                      <h4
+                        class="text-sm font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Total Annual Energy Shifted
+                      </h4>
+                      <p
+                        id="homeowner-total-energy-shifted"
+                        class="text-2xl font-bold text-blue-600 mt-1"
+                      >
+                        0 kWh
+                      </p>
+                    </div>
+                  </div>
+                  <div class="mt-4">
+                    <button
+                      id="view-rep-value"
+                      class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition hidden"
+                    >
+                      View REP Value &raquo;
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-payback" class="hidden">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg">
+              <h2 class="text-2xl font-bold mb-6 border-b pb-3">
+                Payback Period Assumptions
+              </h2>
+              <div class="space-y-4">
+                <div>
+                  <div class="flex items-center justify-between">
+                    <label
+                      for="payback-total-cost"
+                      class="block text-sm font-medium text-gray-600"
+                      >Additional cost of HVAC battery ($)</label
+                    >
+                    <div class="info-icon">
+                      i
+                      <div class="info-tooltip">
+                        The all-in, upfront cost for the battery system hardware
+                        and installation before any incentives.
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="number"
+                    id="payback-total-cost"
+                    value="3500"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm p-2 payback-input"
+                  />
+                </div>
+                <div>
+                  <div class="flex items-center justify-between">
+                    <label
+                      for="payback-federal-itc"
+                      class="block text-sm font-medium text-gray-600"
+                      >Federal ITC (%)</label
+                    >
+                    <div class="info-icon">
+                      i
+                      <div class="info-tooltip">
+                        The federal Investment Tax Credit, which reduces your
+                        tax liability by a percentage of the system cost.
+                        Currently around 30%.
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="number"
+                    id="payback-federal-itc"
+                    value="30"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm p-2 payback-input"
+                  />
+                </div>
+                <div>
+                  <div class="flex items-center justify-between">
+                    <label
+                      for="payback-state-rebates"
+                      class="block text-sm font-medium text-gray-600"
+                      >State/Local Rebates ($)</label
+                    >
+                    <div class="info-icon">
+                      i
+                      <div class="info-tooltip">
+                        Fixed rebate amounts offered by state or local
+                        governments to incentivize battery adoption.
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="number"
+                    id="payback-state-rebates"
+                    value="0"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm p-2 payback-input"
+                  />
+                </div>
+                <div>
+                  <div class="flex items-center justify-between">
+                    <label
+                      for="payback-utility-rebate"
+                      class="block text-sm font-medium text-gray-600"
+                      >Upfront REP/TDU Rebate ($)</label
+                    >
+                    <div class="info-icon">
+                      i
+                      <div class="info-tooltip">
+                        A direct, upfront rebate provided by your utility or
+                        retail electricity provider for installing the system.
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="number"
+                    id="payback-utility-rebate"
+                    value="500"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm p-2 payback-input"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="lg:col-span-2 space-y-8">
+              <div
+                id="payback-results-section"
+                class="bg-white p-6 rounded-2xl shadow-lg"
+              >
+                <h2 class="text-2xl font-bold mb-6 border-b pb-3 text-center">
+                  Estimated Payback Period
+                </h2>
+                <div id="payback-prompt" class="text-center text-gray-500 my-8">
+                  Please calculate blended annual savings in the "Homeowners"
+                  tab first to see the payback period.
+                </div>
+                <div
+                  id="payback-results-content"
+                  class="mt-6 text-center hidden"
+                >
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-gray-100 p-4 rounded-lg">
+                      <h4
+                        class="text-sm font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Net System Cost
+                      </h4>
+                      <p
+                        id="payback-net-cost"
+                        class="text-3xl font-bold text-blue-600 mt-2"
+                      >
+                        $0
+                      </p>
+                    </div>
+                    <div class="bg-gray-100 p-4 rounded-lg">
+                      <h4
+                        class="text-sm font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Blended Annual Savings
+                      </h4>
+                      <p
+                        id="payback-annual-savings"
+                        class="text-3xl font-bold text-green-600 mt-2"
+                      >
+                        $0
+                      </p>
+                    </div>
+                  </div>
+                  <div class="bg-indigo-50 p-6 rounded-lg">
+                    <h3 class="text-xl font-bold text-gray-800">
+                      Estimated Payback Period
+                    </h3>
+                    <p
+                      id="payback-period"
+                      class="text-5xl font-bold text-indigo-600 mt-2"
+                    >
+                      0.0 Years
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-rep" class="hidden">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg">
+              <h2 class="text-2xl font-bold mb-6 border-b pb-3">
+                REP Value Assumptions
+              </h2>
+              <div class="space-y-4">
+                <div>
+                  <div class="flex items-center justify-between">
+                    <label
+                      for="rep-homes"
+                      class="block text-sm font-medium text-gray-600"
+                      >Number of Homes in Program</label
+                    >
+                    <div class="info-icon">
+                      i
+                      <div class="info-tooltip">
+                        The size of the virtual power plant. More homes amplify
+                        the total value from energy arbitrage and grid services.
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="number"
+                    id="rep-homes"
+                    value="10000"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm p-2 rep-input"
+                  />
+                </div>
+                <div>
+                  <div class="flex items-center justify-between">
+                    <label
+                      for="wholesale-peak"
+                      class="block text-sm font-medium text-gray-600"
+                      >Wholesale Price (Peak, $/MWh)</label
+                    >
+                    <div class="info-icon">
+                      i
+                      <div class="info-tooltip">
+                        The price the REP pays for energy on the wholesale
+                        market during peak hours. The battery fleet reduces the
+                        need to buy at this high price.
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="number"
+                    id="wholesale-peak"
+                    value="250"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm p-2 rep-input"
+                  />
+                </div>
+                <div>
+                  <div class="flex items-center justify-between">
+                    <label
+                      for="wholesale-offpeak"
+                      class="block text-sm font-medium text-gray-600"
+                      >Wholesale Price (Off-Peak, $/MWh)</label
+                    >
+                    <div class="info-icon">
+                      i
+                      <div class="info-tooltip">
+                        The price the REP pays for energy during off-peak hours.
+                        This is the cost of energy used to charge the battery
+                        fleet.
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="number"
+                    id="wholesale-offpeak"
+                    value="30"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm p-2 rep-input"
+                  />
+                </div>
+                <div>
+                  <div class="flex items-center justify-between">
+                    <label
+                      for="ancillary-value"
+                      class="block text-sm font-medium text-gray-600"
+                      >Ancillary Service Value ($/kW-month)</label
+                    >
+                    <div class="info-icon">
+                      i
+                      <div class="info-tooltip">
+                        Revenue earned from grid operators for providing
+                        stability services (like frequency regulation). This is
+                        a direct revenue stream.
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="number"
+                    id="ancillary-value"
+                    value="2.5"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm p-2 rep-input"
+                  />
+                </div>
+                <div>
+                  <div class="flex items-center justify-between">
+                    <label
+                      for="capacity-contribution"
+                      class="block text-sm font-medium text-gray-600"
+                      >Capacity Contribution per Home (kW)</label
+                    >
+                    <div class="info-icon">
+                      i
+                      <div class="info-tooltip">
+                        The guaranteed power reduction each home can provide.
+                        This determines the total capacity value for the fleet.
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="number"
+                    id="capacity-contribution"
+                    value="4"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm p-2 rep-input"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="lg:col-span-2 space-y-8">
+              <div
+                id="rep-results-section"
+                class="bg-white p-6 rounded-2xl shadow-lg"
+              >
+                <h2 class="text-2xl font-bold mb-6 border-b pb-3 text-center">
+                  REP Value Proposition
+                </h2>
+                <div id="rep-prompt" class="text-center text-gray-500 my-8">
+                  Please calculate blended annual savings in the "Homeowner
+                  Savings" tab first to see REP value.
+                </div>
+                <div id="rep-results-content" class="mt-6 hidden">
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="text-center bg-gray-100 p-4 rounded-lg">
+                      <h4
+                        class="text-sm font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Avg Daily Shift (per Home)
+                      </h4>
+                      <p
+                        id="rep-avg-daily-energy-shifted"
+                        class="text-2xl font-bold text-blue-600 mt-1"
+                      >
+                        0 kWh
+                      </p>
+                    </div>
+                    <div class="text-center bg-gray-100 p-4 rounded-lg">
+                      <h4
+                        class="text-sm font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Avg Daily Shift (Fleet)
+                      </h4>
+                      <p
+                        id="rep-avg-daily-fleet-shifted"
+                        class="text-2xl font-bold text-blue-600 mt-1"
+                      >
+                        0 kWh
+                      </p>
+                    </div>
+                    <div class="text-center bg-gray-100 p-4 rounded-lg">
+                      <h4
+                        class="text-sm font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Total Annual Shift (Fleet)
+                      </h4>
+                      <p
+                        id="total-energy-shifted"
+                        class="text-2xl font-bold text-blue-600 mt-1"
+                      >
+                        0 MWh
+                      </p>
+                    </div>
+                  </div>
+                  <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold text-center text-gray-800">
+                      Annual REP Value Breakdown
+                    </h3>
+                    <div class="mt-4 space-y-2 text-center">
+                      <p class="text-gray-600">
+                        Avoided Wholesale Costs:
+                        <span
+                          id="rep-wholesale-savings"
+                          class="font-bold text-lg text-gray-900"
+                          >$0</span
+                        >
+                      </p>
+                      <p class="text-gray-600">
+                        Ancillary Service Revenue:
+                        <span
+                          id="rep-ancillary-revenue"
+                          class="font-bold text-lg text-gray-900"
+                          >$0</span
+                        >
+                      </p>
+                      <hr class="my-2" />
+                      <p class="text-gray-900 font-bold text-xl">
+                        Total Annual REP Value:
+                        <span id="rep-total-value" class="text-green-600"
+                          >$0</span
+                        >
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-ci" class="hidden">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg">
+              <h2 class="text-2xl font-bold mb-6 border-b pb-3">
+                Global C&I Assumptions
+              </h2>
+              <div class="space-y-6">
+                <div>
+                  <div class="flex items-center justify-between">
+                    <label
+                      for="ci-ebitda"
+                      class="block text-sm font-medium text-gray-600"
+                      >EBITDA per MW ($M/yr)</label
+                    >
+                    <div class="info-icon">
+                      i
+                      <div class="info-tooltip">
+                        Earnings Before Interest, Taxes, Depreciation, and
+                        Amortization per megawatt of load. A key measure of the
+                        project's profitability.
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="range"
+                    id="ci-ebitda"
+                    value="1"
+                    min="0.5"
+                    max="5"
+                    step="0.1"
+                    class="mt-1 block w-full ci-input"
+                  />
+                  <span
+                    class="text-sm text-gray-500 float-right"
+                    id="ci-ebitda-label"
+                    >$1.0M</span
+                  >
+                </div>
+                <div>
+                  <div class="flex items-center justify-between">
+                    <label
+                      for="ci-time-savings"
+                      class="block text-sm font-medium text-gray-600"
+                      >Time Savings (Years)</label
+                    >
+                    <div class="info-icon">
+                      i
+                      <div class="info-tooltip">
+                        How many years the project is brought online earlier due
+                        to the VPP deferring grid upgrades. This accelerates
+                        revenue generation.
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="range"
+                    id="ci-time-savings"
+                    value="2"
+                    min="1"
+                    max="5"
+                    class="mt-1 block w-full ci-input"
+                  />
+                  <span
+                    class="text-sm text-gray-500 float-right"
+                    id="ci-time-savings-label"
+                    >2 Years</span
+                  >
+                </div>
+                <div>
+                  <div class="flex items-center justify-between">
+                    <label
+                      for="ci-discount-rate"
+                      class="block text-sm font-medium text-gray-600"
+                      >Discount Rate (%)</label
+                    >
+                    <div class="info-icon">
+                      i
+                      <div class="info-tooltip">
+                        Used to calculate the present value of future earnings.
+                        A higher rate means future revenue is valued less today.
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="range"
+                    id="ci-discount-rate"
+                    value="10"
+                    min="5"
+                    max="20"
+                    class="mt-1 block w-full ci-input"
+                  />
+                  <span
+                    class="text-sm text-gray-500 float-right"
+                    id="ci-discount-rate-label"
+                    >10%</span
+                  >
+                </div>
+                <div>
+                  <div class="flex items-center justify-between">
+                    <label
+                      for="ci-op-horizon"
+                      class="block text-sm font-medium text-gray-600"
+                      >Operating Horizon (Years)</label
+                    >
+                    <div class="info-icon">
+                      i
+                      <div class="info-tooltip">
+                        The total number of years the project is expected to
+                        generate revenue. This defines the period for the Net
+                        Present Value (NPV) calculation.
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="range"
+                    id="ci-op-horizon"
+                    value="10"
+                    min="5"
+                    max="30"
+                    class="mt-1 block w-full ci-input"
+                  />
+                  <span
+                    class="text-sm text-gray-500 float-right"
+                    id="ci-op-horizon-label"
+                    >10 Years</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="lg:col-span-2 space-y-6">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-2xl shadow-lg text-center">
+                  <h3 class="text-xl font-bold mb-2">Case 1</h3>
+                  <p class="text-gray-500">
+                    Project Load: <span class="font-bold">10 MW</span>
+                  </p>
+                  <hr class="my-3" />
+                  <h4
+                    class="text-sm font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Annualized NPV Advantage
+                  </h4>
+                  <p
+                    id="ci-annual-npv-1"
+                    class="text-2xl font-bold text-green-600 mt-2"
+                  >
+                    $0.00 M
+                  </p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-lg text-center">
+                  <h3 class="text-xl font-bold mb-2">Case 2</h3>
+                  <p class="text-gray-500">
+                    Project Load: <span class="font-bold">20 MW</span>
+                  </p>
+                  <hr class="my-3" />
+                  <h4
+                    class="text-sm font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Annualized NPV Advantage
+                  </h4>
+                  <p
+                    id="ci-annual-npv-2"
+                    class="text-2xl font-bold text-green-600 mt-2"
+                  >
+                    $0.00 M
+                  </p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-lg text-center">
+                  <h3 class="text-xl font-bold mb-2">Case 3</h3>
+                  <p class="text-gray-500">
+                    Project Load: <span class="font-bold">30 MW</span>
+                  </p>
+                  <hr class="my-3" />
+                  <h4
+                    class="text-sm font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Annualized NPV Advantage
+                  </h4>
+                  <p
+                    id="ci-annual-npv-3"
+                    class="text-2xl font-bold text-green-600 mt-2"
+                  >
+                    $0.00 M
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="view-tdu"
+          class="hidden bg-white p-6 rounded-2xl shadow-lg text-center text-gray-500"
+        >
+          <h2 class="text-2xl font-bold mb-4">TDU / Utility Calculator</h2>
+          <p>Detailed model for TDU / Utility value proposition coming soon.</p>
+        </div>
+        <div
+          id="view-region"
+          class="hidden bg-white p-6 rounded-2xl shadow-lg text-center text-gray-500"
+        >
+          <h2 class="text-2xl font-bold mb-4">Region / State Calculator</h2>
+          <p>
+            Detailed model for Region / State value proposition coming soon.
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        let summaryInitialized = false;
+        let calculatorsInitialized = false;
+
+        const mainTabButtons = {
+          summary: document.getElementById("main-tab-summary"),
+          calculators: document.getElementById("main-tab-calculators"),
+        };
+        const mainViews = {
+          summary: document.getElementById("summary-view"),
+          calculators: document.getElementById("calculator-view"),
+        };
+
+        function updateCILabels() {
+          const ciEbitdaEl = document.getElementById("ci-ebitda");
+          if (!ciEbitdaEl) return;
+          document.getElementById(
+            "ci-ebitda-label"
+          ).textContent = `$${parseFloat(
+            document.getElementById("ci-ebitda").value
+          ).toFixed(1)}M`;
+          document.getElementById("ci-time-savings-label").textContent = `${
+            document.getElementById("ci-time-savings").value
+          } Years`;
+          document.getElementById("ci-discount-rate-label").textContent = `${
+            document.getElementById("ci-discount-rate").value
+          }%`;
+          document.getElementById("ci-op-horizon-label").textContent = `${
+            document.getElementById("ci-op-horizon").value
+          } Years`;
+        }
+
+        function calculateCIValue() {
+          const loads = [10, 20, 30];
+          const ciEbitdaEl = document.getElementById("ci-ebitda");
+          if (!ciEbitdaEl) return;
+
+          const ebitdaPerMW =
+            parseFloat(document.getElementById("ci-ebitda").value) * 1000000;
+          const timeSavings = parseInt(
+            document.getElementById("ci-time-savings").value
+          );
+          const discountRate =
+            parseFloat(document.getElementById("ci-discount-rate").value) / 100;
+          const opHorizon = parseInt(
+            document.getElementById("ci-op-horizon").value
+          );
+
+          loads.forEach((load, index) => {
+            const totalEBITDA = load * ebitdaPerMW;
+            let npv = 0;
+            for (let i = 1; i <= opHorizon; i++) {
+              npv += totalEBITDA / Math.pow(1 + discountRate, i);
+            }
+            let npvDelayed = 0;
+            for (let i = 1; i <= opHorizon; i++) {
+              npvDelayed +=
+                totalEBITDA / Math.pow(1 + discountRate, i + timeSavings);
+            }
+            const npvAdvantage = npv - npvDelayed;
+            const annualizedNPV = npvAdvantage / opHorizon;
+            const ciResultEl = document.getElementById(
+              `ci-annual-npv-${index + 1}`
+            );
+            if (ciResultEl) {
+              ciResultEl.textContent = `$${(annualizedNPV / 1000000).toFixed(
+                2
+              )} M`;
+            }
+          });
+
+          updateSummaryData();
+        }
+
+        function switchMainTab(tab) {
+          Object.values(mainTabButtons).forEach((button) =>
+            button.classList.remove("active")
+          );
+          Object.values(mainViews).forEach((view) =>
+            view.classList.add("hidden")
+          );
+
+          mainTabButtons[tab].classList.add("active");
+          mainViews[tab].classList.remove("hidden");
+
+          if (tab === "summary" && !summaryInitialized) {
+            initSummaryPage();
+            summaryInitialized = true;
+          } else if (tab === "calculators" && !calculatorsInitialized) {
+            initCalculatorPage();
+            calculatorsInitialized = true;
+          }
+        }
+
+        mainTabButtons.summary.addEventListener("click", () =>
+          switchMainTab("summary")
+        );
+        mainTabButtons.calculators.addEventListener("click", () =>
+          switchMainTab("calculators")
+        );
+
+        switchMainTab("summary");
+
+        function initSummaryPage() {
+          Chart.register(ChartDataLabels, window["chartjs-plugin-annotation"]);
+
+          const canvas = document.getElementById("redeployableValueChart");
+          let existingChart = Chart.getChart(canvas);
+          if (existingChart) {
+            existingChart.destroy();
+          }
+
+          const ctx = canvas.getContext("2d");
+          const chartData = {
+            labels: [
+              "5% Adoption (1250 Systems)",
+              "10% Adoption (2500 Systems)",
+              "15% Adoption (3750 Systems)",
+            ],
+            datasets: [
+              {
+                label: "Homeowners",
+                data: [312500, 625000, 937500],
+                backgroundColor: "#3498db",
+              },
+              {
+                label: "REPs",
+                data: [100000, 100000, 100000],
+                backgroundColor: "#2ecc71",
+              },
+              {
+                label: "C&I Business",
+                data: [18594104, 27664399, 27664399],
+                backgroundColor: "#f1c40f",
+              },
+              {
+                label: "TDU / Utility",
+                data: [9236018, 23350000, 35025000],
+                backgroundColor: "#e67e22",
+              },
+              {
+                label: "Region / State",
+                data: [4700000, 14100000, 14100000],
+                backgroundColor: "#9b59b6",
+              },
+            ],
+          };
+
+          const removeTableHighlights = () => {
+            document
+              .querySelectorAll("#value-table tbody tr")
+              .forEach((row) => row.classList.remove("row-highlight"));
+          };
+
+          const config = {
+            type: "bar",
+            data: chartData,
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              onHover: (event, chartElement) => {
+                const target = event.native.target;
+                if (target) {
+                  target.style.cursor = chartElement[0] ? "pointer" : "default";
+                }
+                removeTableHighlights();
+                if (chartElement.length > 0) {
+                  const datasetIndex = chartElement[0].datasetIndex;
+                  const redeployableValueChart = Chart.getChart(ctx);
+                  if (redeployableValueChart) {
+                    const stakeholderName =
+                      redeployableValueChart.data.datasets[datasetIndex].label;
+                    const rowsToHighlight = document.querySelectorAll(
+                      `tr[data-stakeholder="${stakeholderName}"]`
+                    );
+                    rowsToHighlight.forEach((row) =>
+                      row.classList.add("row-highlight")
+                    );
+                  }
+                }
+              },
+              plugins: {
+                title: {
+                  display: true,
+                  text: "Annual Redeployable Value",
+                  font: { size: 22, weight: "bold" },
+                  padding: { top: 10, bottom: 20 },
+                },
+                tooltip: {
+                  callbacks: {
+                    label: (context) =>
+                      `${context.dataset.label || ""}: ${new Intl.NumberFormat(
+                        "en-US",
+                        { style: "currency", currency: "USD" }
+                      ).format(context.parsed.y)}`,
+                  },
+                },
+                datalabels: {
+                  anchor: "end",
+                  align: "top",
+                  formatter: (value, context) => {
+                    if (
+                      context.datasetIndex ===
+                      context.chart.data.datasets.length - 1
+                    ) {
+                      const total = context.chart.data.datasets.reduce(
+                        (sum, dataset) => sum + dataset.data[context.dataIndex],
+                        0
+                      );
+                      if (total >= 1000000)
+                        return `$${(total / 1000000).toFixed(1)}M`;
+                      return `$${(total / 1000).toFixed(0)}K`;
+                    }
+                    return null;
+                  },
+                  font: { weight: "bold", size: 14 },
+                  color: "#34495e",
+                  offset: 8,
+                },
+                annotation: {
+                  annotations: {
+                    line1: {
+                      type: "line",
+                      yMin: 6250000,
+                      yMax: 6250000,
+                      xMin: -0.4,
+                      xMax: 0.4,
+                      borderColor: "#c0392b",
+                      borderWidth: 2,
+                      borderDash: [6, 6],
+                    },
+                    label1: {
+                      type: "label",
+                      xValue: chartData.labels[0],
+                      yValue: 6250000,
+                      content: "100% Subsidy @ 19.0% Share",
+                      yAdjust: -12,
+                      backgroundColor: "rgba(244, 244, 244, 0.85)",
+                      color: "#c0392b",
+                      font: { size: 10, weight: "bold" },
+                      padding: { x: 4, y: 2 },
+                      borderRadius: 4,
+                    },
+                    line2: {
+                      type: "line",
+                      yMin: 12500000,
+                      yMax: 12500000,
+                      xMin: 0.6,
+                      xMax: 1.4,
+                      borderColor: "#c0392b",
+                      borderWidth: 2,
+                      borderDash: [6, 6],
+                    },
+                    label2: {
+                      type: "label",
+                      xValue: chartData.labels[1],
+                      yValue: 12500000,
+                      content: "100% Subsidy @ 19.0% Share",
+                      yAdjust: -12,
+                      backgroundColor: "rgba(244, 244, 244, 0.85)",
+                      color: "#c0392b",
+                      font: { size: 10, weight: "bold" },
+                      padding: { x: 4, y: 2 },
+                      borderRadius: 4,
+                    },
+                    line3: {
+                      type: "line",
+                      yMin: 18750000,
+                      yMax: 18750000,
+                      xMin: 1.6,
+                      xMax: 2.4,
+                      borderColor: "#c0392b",
+                      borderWidth: 2,
+                      borderDash: [6, 6],
+                    },
+                    label3: {
+                      type: "label",
+                      xValue: chartData.labels[2],
+                      yValue: 18750000,
+                      content: "100% Subsidy @ 24.1% Share",
+                      yAdjust: -12,
+                      backgroundColor: "rgba(244, 244, 244, 0.85)",
+                      color: "#c0392b",
+                      font: { size: 10, weight: "bold" },
+                      padding: { x: 4, y: 2 },
+                      borderRadius: 4,
+                    },
+                  },
+                },
+              },
+              scales: {
+                x: { stacked: true },
+                y: {
+                  stacked: true,
+                  beginAtZero: true,
+                  ticks: {
+                    callback: (value) =>
+                      value >= 1000000
+                        ? `$${value / 1000000}M`
+                        : value >= 1000
+                        ? `$${value / 1000}K`
+                        : `$${value}`,
+                  },
+                  grace: "10%",
+                },
+              },
+            },
+          };
+          new Chart(ctx, config);
+          canvas.addEventListener("mouseleave", removeTableHighlights);
+          calculateCIValue();
+        }
+
+        function updateSummaryData() {
+          const ciValue1 =
+            parseFloat(
+              document
+                .getElementById("ci-annual-npv-1")
+                .textContent.replace(/[^\d.-]/g, "")
+            ) * 1000000;
+          const ciValue2 =
+            parseFloat(
+              document
+                .getElementById("ci-annual-npv-2")
+                .textContent.replace(/[^\d.-]/g, "")
+            ) * 1000000;
+          const ciValue3 =
+            parseFloat(
+              document
+                .getElementById("ci-annual-npv-3")
+                .textContent.replace(/[^\d.-]/g, "")
+            ) * 1000000;
+          const ciValues = [ciValue1, ciValue2, ciValue3];
+
+          const formatCurrency = (val) =>
+            val.toLocaleString("en-US", {
+              style: "currency",
+              currency: "USD",
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            });
+
+          document.getElementById("ci-value-5").textContent = formatCurrency(
+            ciValues[0]
+          );
+          document.getElementById("ci-value-10").textContent = formatCurrency(
+            ciValues[1]
+          );
+          document.getElementById("ci-value-15").textContent = formatCurrency(
+            ciValues[2]
+          );
+          document.getElementById("ci-total-5").textContent = formatCurrency(
+            ciValues[0]
+          );
+          document.getElementById("ci-total-10").textContent = formatCurrency(
+            ciValues[1]
+          );
+          document.getElementById("ci-total-15").textContent = formatCurrency(
+            ciValues[2]
+          );
+
+          const homeowners = [312500, 625000, 937500];
+          const reps = [100000, 100000, 100000];
+          const tdu = [9236018, 23350000, 35025000];
+          const region = [4700000, 14100000, 14100000];
+
+          document.getElementById("grand-total-5").textContent = formatCurrency(
+            homeowners[0] + reps[0] + ciValues[0] + tdu[0] + region[0]
+          );
+          document.getElementById("grand-total-10").textContent =
+            formatCurrency(
+              homeowners[1] + reps[1] + ciValues[1] + tdu[1] + region[1]
+            );
+          document.getElementById("grand-total-15").textContent =
+            formatCurrency(
+              homeowners[2] + reps[2] + ciValues[2] + tdu[2] + region[2]
+            );
+
+          const chart = Chart.getChart("redeployableValueChart");
+          if (chart) {
+            chart.data.datasets[2].data = ciValues;
+            chart.update();
+          }
+        }
+
+        function initCalculatorPage() {
+          let costChart, dispatchChart;
+          let yearlySimData = {
+            hot: { dailySavings: 0, energyShifted: 0 },
+            mild: { dailySavings: 0, energyShifted: 0 },
+            winter: { dailySavings: 0, energyShifted: 0 },
+          };
+          function debounce(func, delay) {
+            let timeout;
+            return function (...args) {
+              const context = this;
+              clearTimeout(timeout);
+              timeout = setTimeout(() => func.apply(context, args), delay);
+            };
+          }
+          const PRESETS = {
+            hot: { hvacConsumption: 3.5, hvacPeakTime: 16, hvacLoadShape: 5 },
+            mild: { hvacConsumption: 1.5, hvacPeakTime: 15, hvacLoadShape: 3 },
+            winter: { hvacConsumption: 2.5, hvacPeakTime: 7, hvacLoadShape: 6 },
+          };
+
+          const calcTabButtons = {
+            homeowner: document.getElementById("calc-tab-homeowner"),
+            payback: document.getElementById("calc-tab-payback"),
+            rep: document.getElementById("calc-tab-rep"),
+            ci: document.getElementById("calc-tab-ci"),
+            tdu: document.getElementById("calc-tab-tdu"),
+            region: document.getElementById("calc-tab-region"),
+          };
+          const calcViews = {
+            homeowner: document.getElementById("view-homeowner"),
+            payback: document.getElementById("view-payback"),
+            rep: document.getElementById("view-rep"),
+            ci: document.getElementById("view-ci"),
+            tdu: document.getElementById("view-tdu"),
+            region: document.getElementById("view-region"),
+          };
+
+          function switchCalcTab(tab) {
+            Object.values(calcTabButtons).forEach((button) =>
+              button.classList.remove("active")
+            );
+            Object.values(calcViews).forEach((view) =>
+              view.classList.add("hidden")
+            );
+            calcTabButtons[tab].classList.add("active");
+            calcViews[tab].classList.remove("hidden");
+          }
+
+          Object.keys(calcTabButtons).forEach((key) => {
+            calcTabButtons[key].addEventListener("click", () =>
+              switchCalcTab(key)
+            );
+          });
+
+          function getInputs(presetParams = null) {
+            const peakHoursRaw = document
+              .getElementById("peakHours")
+              .value.split("-")
+              .map(Number);
+            const pricingModel = document.querySelector(
+              'input[name="pricingModel"]:checked'
+            ).value;
+            let hourlyPrices = [];
+            if (pricingModel === "rtp") {
+              hourlyPrices = document
+                .getElementById("rtp-prices")
+                .value.split(",")
+                .map(Number);
+              if (hourlyPrices.length < 24) {
+                const lastPrice = hourlyPrices[hourlyPrices.length - 1] || 0;
+                hourlyPrices = [
+                  ...hourlyPrices,
+                  ...Array(24 - hourlyPrices.length).fill(lastPrice),
+                ];
+              }
+            }
+            return {
+              pricingModel: pricingModel,
+              hourlyPrices: hourlyPrices,
+              peakRate: parseFloat(document.getElementById("peakRate").value),
+              offPeakRate: parseFloat(
+                document.getElementById("offPeakRate").value
+              ),
+              peakStart: isNaN(peakHoursRaw[0]) ? 14 : peakHoursRaw[0],
+              peakEnd: isNaN(peakHoursRaw[1]) ? 19 : peakHoursRaw[1],
+              batteryCapacity: parseFloat(
+                document.getElementById("batteryCapacity").value
+              ),
+              minSoC: parseFloat(document.getElementById("minSoC").value) / 100,
+              maxSoC: parseFloat(document.getElementById("maxSoC").value) / 100,
+              dischargeDuration: parseInt(
+                document.getElementById("dischargeDuration").value
+              ),
+              batteryPower: parseFloat(
+                document.getElementById("batteryPower").value
+              ),
+              batteryEfficiency:
+                parseFloat(document.getElementById("batteryEfficiency").value) /
+                100,
+              ...(presetParams
+                ? {
+                    hvacConsumption: presetParams.hvacConsumption,
+                    hvacPeakTime: presetParams.hvacPeakTime,
+                    hvacLoadShape: presetParams.hvacLoadShape,
+                  }
+                : {
+                    hvacConsumption: parseFloat(
+                      document.getElementById("hvacConsumption").value
+                    ),
+                    hvacPeakTime: parseInt(
+                      document.getElementById("hvacPeakTime").value
+                    ),
+                    hvacLoadShape: parseInt(
+                      document.getElementById("hvacLoadShape").value
+                    ),
+                  }),
+            };
+          }
+          function calculate(params, updateMainUI = true) {
+            if (
+              Object.values(params).some(
+                (p) => typeof p === "number" && isNaN(p)
+              )
+            )
+              return { dailySavings: 0, energyShifted: 0 };
+            if (
+              params.pricingModel === "rtp" &&
+              params.hourlyPrices.some(isNaN)
+            )
+              return { dailySavings: 0, energyShifted: 0 };
+            const effectiveUsableCapacity =
+              params.batteryCapacity * (params.maxSoC - params.minSoC);
+            const hourlyData = {
+              rates: [],
+              hvacUsage: [],
+              fromBattery: Array(24).fill(0),
+              chargePlan: Array(24).fill(0),
+            };
+            let totalHVACUsage = 0;
+            for (let hour = 0; hour < 24; hour++) {
+              const peakHour = params.hvacPeakTime;
+              const spread = 11 - params.hvacLoadShape;
+              const profile = Math.exp(
+                -Math.pow(hour - peakHour, 2) / (2 * Math.pow(spread, 2))
+              );
+              const usage = profile * params.hvacConsumption;
+              hourlyData.hvacUsage.push(usage);
+              totalHVACUsage += usage;
+              if (params.pricingModel === "tou") {
+                const isPeak =
+                  hour >= params.peakStart && hour < params.peakEnd;
+                hourlyData.rates.push(
+                  isPeak ? params.peakRate : params.offPeakRate
+                );
+              } else {
+                hourlyData.rates.push(params.hourlyPrices[hour] || 0);
+              }
+            }
+            let costWithoutBattery = 0,
+              peakCostNoBattery = 0,
+              offPeakCostNoBattery = 0;
+            for (let hour = 0; hour < 24; hour++) {
+              const cost = hourlyData.hvacUsage[hour] * hourlyData.rates[hour];
+              costWithoutBattery += cost;
+              const isPeakWindow =
+                hour >= params.peakStart && hour < params.peakEnd;
+              if (isPeakWindow) peakCostNoBattery += cost;
+              else offPeakCostNoBattery += cost;
+            }
+            const pricesWithHours = hourlyData.rates.map((price, hour) => ({
+              price,
+              hour,
+            }));
+            pricesWithHours.sort((a, b) => b.price - a.price);
+            const dischargeHours = pricesWithHours
+              .slice(0, params.dischargeDuration)
+              .map((p) => p.hour);
+            let energyNeededForDischarge = 0;
+            dischargeHours.forEach((hour) => {
+              if (hour >= 0 && hour < 24)
+                energyNeededForDischarge += hourlyData.hvacUsage[hour];
+            });
+            const energyToStore = Math.min(
+              energyNeededForDischarge,
+              effectiveUsableCapacity
+            );
+            const energyToCharge = energyToStore / params.batteryEfficiency;
+            pricesWithHours.sort((a, b) => a.price - b.price);
+            let tempEnergyToCharge = energyToCharge;
+            for (const p of pricesWithHours) {
+              if (tempEnergyToCharge > 0) {
+                const canCharge = Math.min(
+                  tempEnergyToCharge,
+                  params.batteryPower
+                );
+                hourlyData.chargePlan[p.hour] = canCharge;
+                tempEnergyToCharge -= canCharge;
+              } else break;
+            }
+            let energyStored = energyToStore;
+            dischargeHours.forEach((hour) => {
+              if (hour >= 0 && hour < 24 && energyStored > 0) {
+                const dischargeAmount = Math.min(
+                  hourlyData.hvacUsage[hour],
+                  energyStored,
+                  params.batteryPower
+                );
+                hourlyData.fromBattery[hour] = dischargeAmount;
+                energyStored -= dischargeAmount;
+              }
+            });
+            let chargeCostWithBattery = 0,
+              peakCostWithBattery = 0,
+              offPeakCostWithBattery = 0;
+            for (let hour = 0; hour < 24; hour++) {
+              const hvacEnergyFromGrid =
+                hourlyData.hvacUsage[hour] - hourlyData.fromBattery[hour];
+              const chargeEnergyFromGrid = hourlyData.chargePlan[hour];
+              const rate = hourlyData.rates[hour];
+              chargeCostWithBattery += chargeEnergyFromGrid * rate;
+              const isPeakWindow =
+                hour >= params.peakStart && hour < params.peakEnd;
+              const hvacCost = hvacEnergyFromGrid * rate;
+              if (isPeakWindow) peakCostWithBattery += hvacCost;
+              else offPeakCostWithBattery += hvacCost;
+            }
+            const costWithBattery =
+              chargeCostWithBattery +
+              peakCostWithBattery +
+              offPeakCostWithBattery;
+            const dailySavings = costWithoutBattery - costWithBattery;
+            if (updateMainUI) {
+              document.getElementById(
+                "totalHVACUsage"
+              ).innerHTML = `${totalHVACUsage.toFixed(
+                1
+              )} <span class="text-xl">kWh</span>`;
+              document.getElementById(
+                "dailySavings"
+              ).textContent = `$${dailySavings.toFixed(2)}`;
+              const costBreakdown = {
+                peakCostNoBattery,
+                offPeakCostNoBattery,
+                chargeCostWithBattery,
+                peakCostWithBattery,
+                offPeakCostWithBattery,
+              };
+              updateEquationDisplay(costBreakdown);
+              const hvacFromGridData = hourlyData.hvacUsage.map(
+                (h, i) => h - hourlyData.fromBattery[i]
+              );
+              updateCharts(
+                costWithoutBattery,
+                costWithBattery,
+                hourlyData.rates,
+                hvacFromGridData,
+                hourlyData.chargePlan,
+                hourlyData.fromBattery
+              );
+            }
+            return { dailySavings, energyShifted: energyToStore };
+          }
+          function updateEquationDisplay(b) {
+            document.getElementById(
+              "peakCostNoBattery"
+            ).innerHTML = `$${b.peakCostNoBattery.toFixed(
+              2
+            )} <span class="block text-xs font-sans text-gray-500">(Peak)</span>`;
+            document.getElementById(
+              "offPeakCostNoBattery"
+            ).innerHTML = `$${b.offPeakCostNoBattery.toFixed(
+              2
+            )} <span class="block text-xs font-sans text-gray-500">(Off-Peak)</span>`;
+            document.getElementById(
+              "chargeCostWithBattery"
+            ).innerHTML = `$${b.chargeCostWithBattery.toFixed(
+              2
+            )} <span class="block text-xs font-sans text-gray-500">(Charge Cost)</span>`;
+            document.getElementById(
+              "peakCostWithBattery"
+            ).innerHTML = `$${b.peakCostWithBattery.toFixed(
+              2
+            )} <span class="block text-xs font-sans text-gray-500">(Peak)</span>`;
+            document.getElementById(
+              "offPeakCostWithBattery"
+            ).innerHTML = `$${b.offPeakCostWithBattery.toFixed(
+              2
+            )} <span class="block text-xs font-sans text-gray-500">(Off-Peak)</span>`;
+          }
+          function updateCharts(
+            costWithoutBattery,
+            costWithBattery,
+            rates,
+            hvacFromGrid,
+            chargePlan,
+            fromBattery
+          ) {
+            const labels = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+
+            const costCanvas = document.getElementById("costChart");
+            let existingCostChart = Chart.getChart(costCanvas);
+            if (existingCostChart) {
+              existingCostChart.destroy();
+            }
+            costChart = new Chart(costCanvas.getContext("2d"), {
+              type: "bar",
+              data: {
+                labels: ["Cost w/o Battery", "Cost w/ Battery"],
+                datasets: [
+                  {
+                    label: "Daily Cost ($)",
+                    data: [costWithoutBattery, costWithBattery],
+                    backgroundColor: ["#ef4444", "#22c55e"],
+                    borderColor: ["#dc2626", "#16a34a"],
+                    borderWidth: 1,
+                    borderRadius: 8,
+                  },
+                ],
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: { callback: (value) => "$" + Math.round(value) },
+                  },
+                },
+              },
+            });
+
+            const dispatchCanvas = document.getElementById("dispatchChart");
+            let existingDispatchChart = Chart.getChart(dispatchCanvas);
+            if (existingDispatchChart) {
+              existingDispatchChart.destroy();
+            }
+            dispatchChart = new Chart(dispatchCanvas.getContext("2d"), {
+              type: "bar",
+              data: {
+                labels,
+                datasets: [
+                  {
+                    label: "Grid for HVAC (kWh)",
+                    data: hvacFromGrid,
+                    backgroundColor: "#3b82f6",
+                    order: 2,
+                  },
+                  {
+                    label: "Grid for Charging (kWh)",
+                    data: chargePlan,
+                    backgroundColor: "#93c5fd",
+                    order: 2,
+                  },
+                  {
+                    label: "Energy from Battery (kWh)",
+                    data: fromBattery,
+                    backgroundColor: "#22c55e",
+                    order: 2,
+                  },
+                  {
+                    label: "Energy Rate ($/kWh)",
+                    data: rates,
+                    type: "line",
+                    borderColor: "#ef4444",
+                    tension: 0.3,
+                    yAxisID: "y1",
+                    order: 1,
+                  },
+                ],
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  tooltip: { mode: "index", intersect: false },
+                  title: { display: true, text: "Energy Source by Hour" },
+                  datalabels: { display: false },
+                },
+                scales: {
+                  x: { stacked: true },
+                  y: {
+                    stacked: true,
+                    title: { display: true, text: "Energy (kWh)" },
+                    beginAtZero: true,
+                  },
+                  y1: {
+                    type: "linear",
+                    display: true,
+                    position: "right",
+                    title: { display: true, text: "Rate ($/kWh)" },
+                    grid: { drawOnChartArea: false },
+                  },
+                },
+              },
+            });
+          }
+          function runMainCalculation() {
+            const params = getInputs();
+            calculate(params, true);
+          }
+          const debouncedCalculate = debounce(runMainCalculation, 250);
+          const mainInputs = document.querySelectorAll(
+            '#calculator-view #view-homeowner input[type="number"], #calculator-view #view-homeowner input[type="range"], #calculator-view #view-homeowner input[type="text"]'
+          );
+          mainInputs.forEach((input) =>
+            input.addEventListener("input", debouncedCalculate)
+          );
+          document
+            .getElementById("rtp-prices")
+            .addEventListener("input", debouncedCalculate);
+          document
+            .getElementById("preset-hot")
+            .addEventListener("click", () => {
+              document.getElementById("hvacConsumption").value = 3.5;
+              document.getElementById("hvacPeakTime").value = 16;
+              document.getElementById("hvacLoadShape").value = 5;
+              runMainCalculation();
+            });
+          document
+            .getElementById("preset-mild")
+            .addEventListener("click", () => {
+              document.getElementById("hvacConsumption").value = 1.5;
+              document.getElementById("hvacPeakTime").value = 15;
+              document.getElementById("hvacLoadShape").value = 3;
+              runMainCalculation();
+            });
+          document
+            .getElementById("preset-winter")
+            .addEventListener("click", () => {
+              document.getElementById("hvacConsumption").value = 2.5;
+              document.getElementById("hvacPeakTime").value = 7;
+              document.getElementById("hvacLoadShape").value = 6;
+              runMainCalculation();
+            });
+          const pricingModelRadios = document.querySelectorAll(
+            'input[name="pricingModel"]'
+          );
+          function togglePricingModel() {
+            const selected = document.querySelector(
+              'input[name="pricingModel"]:checked'
+            ).value;
+            document
+              .getElementById("tou-inputs")
+              .classList.toggle("hidden", selected !== "tou");
+            document
+              .getElementById("rtp-inputs")
+              .classList.toggle("hidden", selected !== "rtp");
+            document
+              .getElementById("match-peak-container")
+              .classList.toggle("hidden", selected !== "tou");
+            document
+              .querySelectorAll('input[name="pricingModel"]')
+              .forEach((radio) => {
+                radio.parentElement.classList.toggle("bg-white", radio.checked);
+                radio.parentElement.classList.toggle("shadow", radio.checked);
+              });
+          }
+          pricingModelRadios.forEach((radio) =>
+            radio.addEventListener("change", () => {
+              togglePricingModel();
+              runMainCalculation();
+            })
+          );
+          function updateDischargeDurationFromPeak() {
+            if (document.getElementById("match-peak-duration").checked) {
+              const peakHoursRaw = document
+                .getElementById("peakHours")
+                .value.split("-")
+                .map(Number);
+              if (!isNaN(peakHoursRaw[0]) && !isNaN(peakHoursRaw[1])) {
+                document.getElementById("dischargeDuration").value =
+                  peakHoursRaw[1] - peakHoursRaw[0];
+                runMainCalculation();
+              }
+            }
+          }
+          document
+            .getElementById("match-peak-duration")
+            .addEventListener("change", updateDischargeDurationFromPeak);
+          document
+            .getElementById("peakHours")
+            .addEventListener("input", updateDischargeDurationFromPeak);
+          function calculateYearly() {
+            const hotDays =
+              parseInt(document.getElementById("hotDays").value) || 0;
+            const mildDays =
+              parseInt(document.getElementById("mildDays").value) || 0;
+            const baseParams = getInputs();
+            yearlySimData.hot = calculate(
+              { ...baseParams, ...PRESETS.hot },
+              false
+            );
+            yearlySimData.mild = calculate(
+              { ...baseParams, ...PRESETS.mild },
+              false
+            );
+            yearlySimData.winter = calculate(
+              { ...baseParams, ...PRESETS.winter },
+              false
+            );
+            document.getElementById(
+              "hot-savings-per-day"
+            ).textContent = `$${yearlySimData.hot.dailySavings.toFixed(2)}`;
+            document.getElementById(
+              "mild-savings-per-day"
+            ).textContent = `$${yearlySimData.mild.dailySavings.toFixed(2)}`;
+            document.getElementById(
+              "winter-savings-per-day"
+            ).textContent = `$${yearlySimData.winter.dailySavings.toFixed(2)}`;
+            const totalSavings =
+              hotDays * yearlySimData.hot.dailySavings +
+              mildDays * yearlySimData.mild.dailySavings +
+              (365 - hotDays - mildDays) * yearlySimData.winter.dailySavings;
+            const totalEnergyShifted =
+              hotDays * yearlySimData.hot.energyShifted +
+              mildDays * yearlySimData.mild.energyShifted +
+              (365 - hotDays - mildDays) * yearlySimData.winter.energyShifted;
+            const avgDailyEnergyShifted = totalEnergyShifted / 365;
+            document.getElementById(
+              "blendedAnnualSavings"
+            ).textContent = `$${totalSavings.toLocaleString("en-US", {
+              maximumFractionDigits: 0,
+            })}`;
+            document.getElementById(
+              "homeowner-total-energy-shifted"
+            ).textContent = `${totalEnergyShifted.toLocaleString("en-US", {
+              maximumFractionDigits: 0,
+            })} kWh`;
+            document.getElementById(
+              "homeowner-avg-daily-energy-shifted"
+            ).textContent = `${avgDailyEnergyShifted.toFixed(1)} kWh`;
+            document
+              .getElementById("yearly-results")
+              .classList.remove("hidden");
+            document
+              .getElementById("view-rep-value")
+              .classList.remove("hidden");
+            calculateRepValue();
+            document.getElementById("rep-prompt").classList.add("hidden");
+            document
+              .getElementById("rep-results-content")
+              .classList.remove("hidden");
+            calculatePayback();
+          }
+          function calculateRepValue() {
+            const hotDays =
+              parseInt(document.getElementById("hotDays").value) || 0;
+            const mildDays =
+              parseInt(document.getElementById("mildDays").value) || 0;
+            const winterDays = 365 - hotDays - mildDays;
+            const repHomes =
+              parseInt(document.getElementById("rep-homes").value) || 0;
+            const wholesalePeak =
+              parseFloat(document.getElementById("wholesale-peak").value) /
+              1000;
+            const wholesaleOffPeak =
+              parseFloat(document.getElementById("wholesale-offpeak").value) /
+              1000;
+            const ancillaryValue =
+              parseFloat(document.getElementById("ancillary-value").value) || 0;
+            const capacityContribution =
+              parseFloat(
+                document.getElementById("capacity-contribution").value
+              ) || 0;
+            const totalEnergyShifted =
+              hotDays * yearlySimData.hot.energyShifted +
+              mildDays * yearlySimData.mild.energyShifted +
+              winterDays * yearlySimData.winter.energyShifted;
+            const avgDailyEnergyShifted = totalEnergyShifted / 365;
+            document.getElementById("total-energy-shifted").textContent = `${(
+              (totalEnergyShifted * repHomes) /
+              1000
+            ).toLocaleString("en-US", {
+              maximumFractionDigits: 0,
+            })} MWh / year`;
+            document.getElementById(
+              "rep-avg-daily-energy-shifted"
+            ).textContent = `${avgDailyEnergyShifted.toFixed(1)} kWh`;
+            document.getElementById(
+              "rep-avg-daily-fleet-shifted"
+            ).textContent = `${(
+              avgDailyEnergyShifted * repHomes
+            ).toLocaleString("en-US", { maximumFractionDigits: 0 })} kWh`;
+            const wholesaleSavings =
+              totalEnergyShifted *
+              (wholesalePeak - wholesaleOffPeak) *
+              repHomes;
+            const ancillaryRevenue =
+              repHomes * capacityContribution * ancillaryValue * 12;
+            document.getElementById(
+              "rep-wholesale-savings"
+            ).textContent = `$${wholesaleSavings.toLocaleString("en-US", {
+              maximumFractionDigits: 0,
+            })}`;
+            document.getElementById(
+              "rep-ancillary-revenue"
+            ).textContent = `$${ancillaryRevenue.toLocaleString("en-US", {
+              maximumFractionDigits: 0,
+            })}`;
+            document.getElementById("rep-total-value").textContent = `$${(
+              wholesaleSavings + ancillaryRevenue
+            ).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+          }
+          document
+            .getElementById("calculate-yearly")
+            .addEventListener("click", calculateYearly);
+          document
+            .getElementById("view-rep-value")
+            .addEventListener("click", () => {
+              calculateRepValue();
+              document.getElementById("rep-prompt").classList.add("hidden");
+              document
+                .getElementById("rep-results-content")
+                .classList.remove("hidden");
+              switchCalcTab("rep");
+            });
+          const repInputs = document.querySelectorAll(".rep-input");
+          repInputs.forEach((input) =>
+            input.addEventListener("input", debounce(calculateRepValue, 250))
+          );
+          function updateYearlyDays() {
+            const hotDays =
+              parseInt(document.getElementById("hotDays").value) || 0;
+            const mildDays =
+              parseInt(document.getElementById("mildDays").value) || 0;
+            const winterDays = 365 - hotDays - mildDays;
+            const winterDaysInput = document.getElementById("winterDays");
+            winterDaysInput.value = winterDays;
+            document.getElementById("total-days").textContent = `Total Days: ${
+              hotDays + mildDays + winterDays
+            }`;
+            if (winterDays < 0) {
+              winterDaysInput.classList.add("bg-red-200", "text-red-800");
+            } else {
+              winterDaysInput.classList.remove("bg-red-200", "text-red-800");
+            }
+          }
+          document
+            .getElementById("hotDays")
+            .addEventListener("input", updateYearlyDays);
+          document
+            .getElementById("mildDays")
+            .addEventListener("input", updateYearlyDays);
+
+          const ciInputs = document.querySelectorAll(".ci-input");
+          ciInputs.forEach((input) => {
+            input.addEventListener("input", () => {
+              updateCILabels();
+              calculateCIValue();
+            });
+          });
+
+          function calculatePayback() {
+            const annualSavingsText = document.getElementById(
+              "blendedAnnualSavings"
+            ).textContent;
+            const annualSavings = parseFloat(
+              annualSavingsText.replace(/[^0-9.-]+/g, "")
+            );
+
+            if (!annualSavings || annualSavings <= 0) {
+              document
+                .getElementById("payback-prompt")
+                .classList.remove("hidden");
+              document
+                .getElementById("payback-results-content")
+                .classList.add("hidden");
+              return;
+            }
+
+            document.getElementById("payback-prompt").classList.add("hidden");
+            document
+              .getElementById("payback-results-content")
+              .classList.remove("hidden");
+            document.getElementById(
+              "payback-annual-savings"
+            ).textContent = `$${annualSavings.toLocaleString("en-US", {
+              maximumFractionDigits: 0,
+            })}`;
+
+            const totalCost =
+              parseFloat(document.getElementById("payback-total-cost").value) ||
+              0;
+            const federalItcPercent =
+              parseFloat(
+                document.getElementById("payback-federal-itc").value
+              ) || 0;
+            const stateRebates =
+              parseFloat(
+                document.getElementById("payback-state-rebates").value
+              ) || 0;
+            const utilityRebate =
+              parseFloat(
+                document.getElementById("payback-utility-rebate").value
+              ) || 0;
+
+            const federalCredit = totalCost * (federalItcPercent / 100);
+            const netCost =
+              totalCost - federalCredit - stateRebates - utilityRebate;
+
+            document.getElementById(
+              "payback-net-cost"
+            ).textContent = `$${netCost.toLocaleString("en-US", {
+              maximumFractionDigits: 0,
+            })}`;
+
+            const paybackPeriod = netCost / annualSavings;
+
+            document.getElementById(
+              "payback-period"
+            ).textContent = `${paybackPeriod.toFixed(1)} Years`;
+          }
+
+          const paybackInputs = document.querySelectorAll(".payback-input");
+          paybackInputs.forEach((input) =>
+            input.addEventListener("input", debounce(calculatePayback, 250))
+          );
+
+          togglePricingModel();
+          runMainCalculation();
+          updateYearlyDays();
+          updateDischargeDurationFromPeak();
+          updateCILabels();
+          calculateCIValue();
+          calculatePayback();
+        }
+      });
+    </script>
+  </body>
+</html>
