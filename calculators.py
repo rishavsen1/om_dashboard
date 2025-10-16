@@ -282,8 +282,18 @@ def calculate_rep_value(params: Dict) -> Dict:
     """
     Calculate REP (Retail Electricity Provider) value proposition.
 
+    CRITICAL: Avoids double-counting by properly accounting for:
+    1. Revenue loss = Homeowner's actual savings (dynamically calculated)
+    2. Wholesale cost change = Based on actual energy flow changes
+    3. Net margin = Wholesale savings - Revenue loss
+
+    The homeowner's savings already account for all rate complexity, so we use
+    that directly rather than recalculating with simplified assumptions.
+
     Args:
         params: Dictionary with REP parameters and homeowner results
+            - blendedAnnualSavings: Total homeowner savings per year (REQUIRED)
+            - totalEnergyShifted: Total kWh shifted per home per year (REQUIRED)
 
     Returns:
         Dictionary with REP value breakdown
@@ -294,27 +304,61 @@ def calculate_rep_value(params: Dict) -> Dict:
     ancillary_value = params.get("ancillaryValue", 2.5)  # $/kW-month
     capacity_contribution = params.get("capacityContribution", 4)  # kW
 
-    # Energy shifted from yearly simulation
+    # Homeowner results from yearly simulation
+    homeowner_annual_savings = params.get("blendedAnnualSavings", 0)  # $ per home per year
     total_energy_shifted = params.get("totalEnergyShifted", 0)  # kWh per home per year
-    avg_daily_energy_shifted = total_energy_shifted / 365
+    avg_daily_energy_shifted = total_energy_shifted / 365 if total_energy_shifted > 0 else 0
 
     # Fleet-wide calculations
-    fleet_annual_shift = total_energy_shifted * rep_homes
+    fleet_annual_savings = homeowner_annual_savings * rep_homes  # Total homeowner savings
+    fleet_annual_shift = total_energy_shifted * rep_homes  # Total kWh shifted
     fleet_avg_daily_shift = avg_daily_energy_shifted * rep_homes
 
-    # Value calculations
-    wholesale_savings = fleet_annual_shift * (wholesale_peak - wholesale_off_peak)
+    # === REP ECONOMIC ANALYSIS (avoiding double-counting) ===
+
+    # REVENUE IMPACT:
+    # Every dollar the homeowner saves = one less dollar REP collects
+    # This is already dynamically calculated in homeowner tab (accounts for all complexity!)
+    retail_revenue_loss = fleet_annual_savings
+
+    # WHOLESALE COST IMPACT:
+    # REP's procurement pattern changes due to battery:
+    # - Without battery: REP buys energy matching homeowner's consumption (peak-heavy)
+    # - With battery: REP buys energy matching homeowner's total draw (more off-peak)
+    #
+    # Simplified model: Assume shifted energy moves from peak wholesale to off-peak wholesale
+    # (In reality, it's more complex, but this captures the first-order effect)
+    wholesale_cost_without_battery = fleet_annual_shift * wholesale_peak
+    wholesale_cost_with_battery = fleet_annual_shift * wholesale_off_peak
+    wholesale_cost_savings = wholesale_cost_without_battery - wholesale_cost_with_battery
+
+    # NET MARGIN IMPROVEMENT for REP:
+    # = (Wholesale Cost Savings) - (Retail Revenue Loss)
+    #
+    # Note: This can be NEGATIVE if retail spread > wholesale spread!
+    # Example: If retail spread is $0.16/kWh but wholesale spread is only $0.05/kWh,
+    #          REP loses more revenue than they save in costs.
+    net_margin_improvement = wholesale_cost_savings - retail_revenue_loss
+
+    # Ancillary services revenue (new revenue stream from VPP capabilities)
     ancillary_revenue = rep_homes * capacity_contribution * ancillary_value * 12
 
-    total_value = wholesale_savings + ancillary_revenue
+    # Total REP value = Net margin improvement + New ancillary revenue
+    total_value = net_margin_improvement + ancillary_revenue
 
     return {
         "avgDailyEnergyShifted": round(avg_daily_energy_shifted, 2),
         "avgDailyFleetShifted": round(fleet_avg_daily_shift, 2),
         "totalEnergyShifted": round(fleet_annual_shift / 1000, 2),  # MWh
-        "wholesaleSavings": round(wholesale_savings, 2),
+        # Detailed breakdown (avoiding double-counting)
+        "wholesaleCostSavings": round(wholesale_cost_savings, 2),
+        "retailRevenueLoss": round(retail_revenue_loss, 2),
+        "netMarginImprovement": round(net_margin_improvement, 2),
         "ancillaryRevenue": round(ancillary_revenue, 2),
+        # Total value
         "totalValue": round(total_value, 2),
+        # Legacy field for backward compatibility
+        "wholesaleSavings": round(wholesale_cost_savings, 2),
     }
 
 
